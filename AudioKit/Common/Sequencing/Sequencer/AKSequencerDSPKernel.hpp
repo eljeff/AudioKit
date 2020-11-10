@@ -103,18 +103,20 @@ public:
 
     void addPlayingNote(MIDINote note, int offset) {
         if (note.noteOn.data2 > 0) {
-            sendMidiData(note.noteOn.status, note.noteOn.data1, note.noteOn.data2, offset, note.noteOn.beat);
+            sendMidiData(note.noteOn.status, note.noteOn.data1, note.noteOn.data2, offset, note.noteOn.beat, false);
             playingNotes.push_back(note);
         } else {
-            sendMidiData(note.noteOff.status, note.noteOff.data1, note.noteOff.data2, offset, note.noteOn.beat);
+            sendMidiData(note.noteOff.status, note.noteOff.data1, note.noteOff.data2, offset, note.noteOn.beat, false);
         }
     }
 
     void stopPlayingNote(MIDINote note, int offset, int index) {
-        sendMidiData(note.noteOff.status, note.noteOff.data1, note.noteOff.data2, offset, note.noteOff.beat);
+        sendMidiData(note.noteOff.status, note.noteOff.data1, note.noteOff.data2, offset, note.noteOff.beat, false);
         playingNotes.erase(playingNotes.begin() + index);
     }
 
+    bool wasPlaying = false;
+    long lastPosition = 0;
     void process(AUAudioFrameCount frameCount, AUAudioFrameCount bufferOffset) override {
         if (isPlaying) {
             if (positionInSamples >= lengthInSamples()){
@@ -123,26 +125,49 @@ public:
                     return;
                 }
             }
-            long currentStartSample = positionModulo();
+            long currentStartSample = positionModulo(0) + frameCount;
             long currentEndSample = currentStartSample + frameCount;
+            if (wasPlaying != isPlaying && events.size() > 0) {
+                //printf("playback state change\n");
+                currentStartSample -= frameCount;
+            }
+            if(events.size() > 0 && lastPosition > currentStartSample) {
+//                printf("getting events for %lu to %lu (%lu) (%lu - %lu)\n", currentStartSample, currentEndSample, (currentEndSample - currentStartSample), currentStartSample - frameCount, currentEndSample - frameCount);
+            }
+            lastPosition = currentStartSample;
             for (int i = 0; i < events.size(); i++) {
                 // go through every event
                 int triggerTime = beatToSamples(events[i].beat);
                 if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
                     // this event is supposed to trigger between currentStartSample and currentEndSample
+                    //printf("getting events for %lu to %lu (%lu) (%lu - %lu)\n", currentStartSample, currentEndSample, (currentEndSample - currentStartSample), currentStartSample - frameCount, currentEndSample - frameCount);
                     int offset = (int)(triggerTime - currentStartSample);
+                    //printf("sending normal event\n");
                     sendMidiData(events[i].status, events[i].data1, events[i].data2,
-                                 offset, events[i].beat);
-                } else if (currentEndSample > lengthInSamples() && loopEnabled) {
-                    // this buffer extends beyond the length of the loop and looping is on
+                                 offset, events[i].beat, events.size() > 0);
+                } else if(events.size() > 0 && lastPosition > currentStartSample) {
+//                    printf("getting events for %lu to %lu (%lu) (%lu - %lu)\n", currentStartSample, currentEndSample, (currentEndSample - currentStartSample), currentStartSample - frameCount, currentEndSample - frameCount);
+//                    int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
+//                    int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
+//                    if (triggerTime < samplesOfBufferForNewLoop) {
+//                        // this event would trigger early enough in the next loop that it should happen in this buffer
+//                        // ie. this buffer contains events from the previous loop, and the next loop
+//                        int offset = (int)triggerTime + loopRestartInBuffer + frameCount;
+//                        printf("sending early event %i\n", i);
+//                        sendMidiData(events[i].status, events[i].data1, events[i].data2,
+//                                     offset, events[i].beat, events.size() > 0);
+//                    }
+                } else if (currentEndSample > lengthInSamples() && currentEndSample < lengthInSamples() + frameCount && loopEnabled) {
+//                    // this buffer extends beyond the length of the loop and looping is on
                     int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
                     int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
-                    if (triggerTime < samplesOfBufferForNewLoop) {
+                    if (triggerTime < samplesOfBufferForNewLoop + frameCount) {
                         // this event would trigger early enough in the next loop that it should happen in this buffer
                         // ie. this buffer contains events from the previous loop, and the next loop
                         int offset = (int)triggerTime + loopRestartInBuffer;
+                        //printf("sending wraparound event %i samplesOfBufferForNewLoop%i\n", i, samplesOfBufferForNewLoop);
                         sendMidiData(events[i].status, events[i].data1, events[i].data2,
-                                     offset, events[i].beat);
+                                     offset, events[i].beat, events.size() > 0);
                     }
                 }
             }
@@ -188,6 +213,7 @@ public:
             positionInSamples += frameCount;
         }
         framesCounted += frameCount;
+        wasPlaying = isPlaying;
     }
 
     void removeNoteAt(double beat) {
@@ -244,11 +270,13 @@ public:
         }
     }
 
-    void sendMidiData(UInt8 status, UInt8 data1, UInt8 data2, double offset, double time) {
+    void sendMidiData(UInt8 status, UInt8 data1, UInt8 data2, double offset, double time, bool debug) {
         if (!seqEnabled) {
             return;
         }
-//        printf("%p: sending: %i %i %i at offset %f (%f beats)\n", &midiEndpoint, status, data1, data2, offset, time);
+        if (debug) {
+            //printf("%p: sending: %i %i %i at offset %f (%f beats)\n", &midiEndpoint, status, data1, data2, offset, time);
+        }
         if (midiPort == 0 || midiEndpoint == 0) {
             MusicDeviceMIDIEvent(targetAU, status, data1, data2, offset);
         } else {
@@ -272,19 +300,19 @@ public:
         return (int)(beat / tempo * 60 * sampleRate);
     }
 
-    long positionModulo() {
+    long positionModulo(int bufferSize) {
         long length = lengthInSamples();
         if (positionInSamples == 0 || length == 0) {
-            return 0;
+            return 0 + bufferSize;
         } else if (positionInSamples < 0) {
-            return positionInSamples;
+            return positionInSamples + bufferSize;
         } else {
-            return positionInSamples % length;
+            return (positionInSamples % length) + bufferSize;
         }
     }
 
     double currentPositionInBeats() {
-        return (double)positionModulo() / sampleRate * (tempo / 60);
+        return (double)positionModulo(0) / sampleRate * (tempo / 60);
     }
 
     bool validTriggerTime(double beat){
@@ -297,6 +325,7 @@ private:
     AudioUnit targetAU;
     UInt64 framesCounted = 0;
     long positionInSamples = 0;
+    DSPKernel* targetKernel;
 
 public:
     bool started = false;
