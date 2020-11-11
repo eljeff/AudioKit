@@ -135,8 +135,8 @@ public:
                 currentStartSample -= frameCount;
             }
             if(events.size() > 0 && lastPosition > currentStartSample) {
-                printDebugFrameInfo("loop happened", currentStartSample, currentEndSample, frameCount);
-                printf("");
+//                printDebugFrameInfo("loop happened", currentStartSample, currentEndSample, frameCount);
+//                printf("");
             }
             lastPosition = currentStartSample;
             for (int i = 0; i < events.size(); i++) {
@@ -144,8 +144,8 @@ public:
                 int triggerTime = beatToSamples(events[i].beat);
                 if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
                     // this event is supposed to trigger between currentStartSample and currentEndSample
-                    printDebugFrameInfo("getting normal events", currentStartSample, currentEndSample, frameCount);
-                    printf("");
+//                    printDebugFrameInfo("getting normal events", currentStartSample, currentEndSample, frameCount);
+//                    printf("");
                     int offset = (int)(triggerTime - currentStartSample);
                     //printf("sending normal event\n");
                     sendMidiData(events[i].status, events[i].data1, events[i].data2,
@@ -178,8 +178,8 @@ public:
 //                    }
                 } else if (currentEndSample > lengthInSamples() && currentEndSample <= lengthInSamples() + frameCount && loopEnabled) {
 //                    // this buffer extends beyond the length of the loop and looping is on
-                    printDebugFrameInfo("getting wraparound events", currentStartSample, currentEndSample, frameCount);
-                    printf("");
+//                    printDebugFrameInfo("getting wraparound events", currentStartSample, currentEndSample, frameCount);
+//                    printf("");
                     int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
                     int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
                     if (triggerTime < samplesOfBufferForNewLoop + frameCount) {
@@ -296,7 +296,7 @@ public:
             return;
         }
         if (debug) {
-            printf("%p: sending: %i %i %i at offset %f (%f beats)\n", &midiEndpoint, status, data1, data2, offset, time);
+//            printf("%p: sending: %i %i %i at offset %f (%f beats)\n", &midiEndpoint, status, data1, data2, offset, time);
         }
         if (midiPort == 0 || midiEndpoint == 0) {
             MusicDeviceMIDIEvent(targetAU, status, data1, data2, offset);
