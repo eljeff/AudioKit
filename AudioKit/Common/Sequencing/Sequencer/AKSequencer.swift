@@ -58,6 +58,12 @@ open class AKSequencer {
         load(midiFileURL: fileURL)
     }
 
+    var lookaheadEnabled = false {
+        didSet {
+            tracks.forEach({ $0.lookAheadEnabled = lookaheadEnabled })
+        }
+    }
+
     /// Start playback of the track from the current position (like unpause)
     open func play() {
         for track in tracks { track.play() }

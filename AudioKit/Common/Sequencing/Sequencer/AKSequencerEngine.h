@@ -15,6 +15,7 @@ typedef void (^AKCCallback)(void);
 @property (nonatomic) float startPoint;
 @property (nonatomic) bool seqEnabled;
 @property (nonatomic) bool loopEnabled;
+@property (nonatomic) bool lookAheadEnabled;
 @property (nonatomic) double tempo;
 @property (readonly) double currentPosition;
 @property (nonatomic) double length;

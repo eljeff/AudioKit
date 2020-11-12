@@ -128,24 +128,27 @@ public:
                     return;
                 }
             }
-            long currentStartSample = positionModulo(0) + frameCount;
+            long lookaheadOffset = (lookAheadEnabled ? frameCount : 0);
+            long currentStartSample = positionModulo(0) + lookaheadOffset;
             long currentEndSample = currentStartSample + frameCount;
             if (wasPlaying != isPlaying && events.size() > 0) {
-                //printf("playback state change\n");
-                currentStartSample -= frameCount;
+                printf("playback state change\n");
+                currentStartSample -= lookaheadOffset;
             }
             if(events.size() > 0 && lastPosition > currentStartSample) {
-//                printDebugFrameInfo("loop happened", currentStartSample, currentEndSample, frameCount);
-//                printf("");
+                printDebugFrameInfo("loop happened", currentStartSample, currentEndSample, frameCount);
+                printf("");
             }
+            printDebugFrameInfo("processin", currentStartSample, currentEndSample, frameCount);
+            printf("processin...\n");
             lastPosition = currentStartSample;
             for (int i = 0; i < events.size(); i++) {
                 // go through every event
                 int triggerTime = beatToSamples(events[i].beat);
                 if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
                     // this event is supposed to trigger between currentStartSample and currentEndSample
-//                    printDebugFrameInfo("getting normal events", currentStartSample, currentEndSample, frameCount);
-//                    printf("");
+                    printDebugFrameInfo("getting normal events", currentStartSample, currentEndSample, frameCount);
+                    printf("");
                     int offset = (int)(triggerTime - currentStartSample);
                     //printf("sending normal event\n");
                     sendMidiData(events[i].status, events[i].data1, events[i].data2,
@@ -176,13 +179,13 @@ public:
 //                        sendMidiData(events[i].status, events[i].data1, events[i].data2,
 //                                     offset, events[i].beat, events.size() > 0);
 //                    }
-                } else if (currentEndSample > lengthInSamples() && currentEndSample <= lengthInSamples() + frameCount && loopEnabled) {
+                } else if (currentEndSample > lengthInSamples() && (currentEndSample <= (lengthInSamples() + frameCount) || !lookAheadEnabled) && loopEnabled) {
 //                    // this buffer extends beyond the length of the loop and looping is on
-//                    printDebugFrameInfo("getting wraparound events", currentStartSample, currentEndSample, frameCount);
-//                    printf("");
+                    printDebugFrameInfo("getting wraparound events", currentStartSample, currentEndSample, frameCount);
+                    printf("");
                     int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
                     int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
-                    if (triggerTime < samplesOfBufferForNewLoop + frameCount) {
+                    if (triggerTime < samplesOfBufferForNewLoop + lookaheadOffset) {
                         // this event would trigger early enough in the next loop that it should happen in this buffer
                         // ie. this buffer contains events from the previous loop, and the next loop
                         int offset = (int)triggerTime + loopRestartInBuffer;
@@ -366,4 +369,5 @@ public:
     bool seqEnabled = true;
     bool loopEnabled = true;
     uint numberOfLoops = 0;
+    bool lookAheadEnabled = true;
 };

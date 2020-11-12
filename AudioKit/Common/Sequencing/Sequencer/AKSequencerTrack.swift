@@ -55,6 +55,12 @@ open class AKSequencerTrack: AKNode, AKComponent {
         get { return internalAU?.loopEnabled ?? false }
     }
 
+    /// Is lookAhead enabled?
+    public var lookAheadEnabled: Bool {
+        set { internalAU?.lookAheadEnabled = newValue }
+        get { return internalAU?.lookAheadEnabled ?? false }
+    }
+
     /// Is the track currently playing?
     public var isPlaying: Bool {
         return internalAU?.isPlaying ?? false

@@ -63,6 +63,14 @@
     return _kernel.loopEnabled;
 }
 
+- (void)setLookAheadEnabled:(bool)lookAheadEnabled {
+    _kernel.lookAheadEnabled = lookAheadEnabled;
+}
+
+- (bool)lookAheadEnabled {
+    return _kernel.lookAheadEnabled;
+}
+
 - (void)setTarget:(AudioUnit)target {
     _kernel.setTargetAU(target);
 }
