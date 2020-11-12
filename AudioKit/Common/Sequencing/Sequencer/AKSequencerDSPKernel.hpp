@@ -145,7 +145,7 @@ public:
 //                    printf("");
                     int offset = (int)(triggerTime - currentStartSample);
                     sendMidiData(events[i].status, events[i].data1, events[i].data2,
-                                 offset, events[i].beat, events.size() > 0);
+                                 offset, events[i].beat, false);
                     
                 } else if (currentEndSample > lengthInSamples() && (currentEndSample <= (lengthInSamples() + frameCount) || !lookAheadEnabled) && loopEnabled) {
 //                    // this buffer extends beyond the length of the loop and looping is on
@@ -159,7 +159,7 @@ public:
                         int offset = (int)triggerTime + loopRestartInBuffer;
                         //printf("sending wraparound event %i samplesOfBufferForNewLoop%i\n", i, samplesOfBufferForNewLoop);
                         sendMidiData(events[i].status, events[i].data1, events[i].data2,
-                                     offset, events[i].beat, events.size() > 0);
+                                     offset, events[i].beat, false);
                     }
                 }
             }
