@@ -122,10 +122,6 @@ public:
     long lastPosition = 0;
     void process(AUAudioFrameCount frameCount, AUAudioFrameCount bufferOffset) override {
 
-        if (events.size() > 0) {
-            printf("begin proc...\n");
-            printf("");
-        }
         if (isPlaying) {
             if (positionInSamples >= lengthInSamples()){
                 if (!loopEnabled) { //stop if played enough
@@ -136,17 +132,8 @@ public:
             long lookaheadOffset = (lookAheadEnabled ? frameCount : 0);
             long currentStartSample = positionModulo(0) + lookaheadOffset;
             long currentEndSample = currentStartSample + frameCount;
-            if (events.size() > 0) {
-                printDebugFrameInfo("processing...", currentStartSample, currentEndSample, frameCount);
-                printf("");
-            }
             if (wasPlaying != isPlaying && (events.size() > 0 || notes.size() > 0) && lookAheadEnabled) {
-                printf("playback state change\n");
                 currentStartSample -= lookaheadOffset;
-            }
-            if(events.size() > 0 && lastPosition > currentStartSample) {
-                printDebugFrameInfo("loop happened", currentStartSample, currentEndSample, frameCount);
-                printf("");
             }
             lastPosition = currentStartSample;
             for (int i = 0; i < events.size(); i++) {
@@ -154,16 +141,16 @@ public:
                 int triggerTime = beatToSamples(events[i].beat);
                 if (currentStartSample <= triggerTime && triggerTime < currentEndSample) {
                     // this event is supposed to trigger between currentStartSample and currentEndSample
-                    printDebugFrameInfo("getting normal events", currentStartSample, currentEndSample, frameCount);
-                    printf("");
+//                    printDebugFrameInfo("getting normal events", currentStartSample, currentEndSample, frameCount);
+//                    printf("");
                     int offset = (int)(triggerTime - currentStartSample);
                     sendMidiData(events[i].status, events[i].data1, events[i].data2,
                                  offset, events[i].beat, events.size() > 0);
                     
                 } else if (currentEndSample > lengthInSamples() && (currentEndSample <= (lengthInSamples() + frameCount) || !lookAheadEnabled) && loopEnabled) {
 //                    // this buffer extends beyond the length of the loop and looping is on
-                    printDebugFrameInfo("getting wraparound events", currentStartSample, currentEndSample, frameCount);
-                    printf("");
+//                    printDebugFrameInfo("getting wraparound events", currentStartSample, currentEndSample, frameCount);
+//                    printf("");
                     int loopRestartInBuffer = (int)(lengthInSamples() - currentStartSample);
                     int samplesOfBufferForNewLoop = frameCount - loopRestartInBuffer;
                     if (triggerTime < samplesOfBufferForNewLoop + lookaheadOffset) {
@@ -173,11 +160,6 @@ public:
                         //printf("sending wraparound event %i samplesOfBufferForNewLoop%i\n", i, samplesOfBufferForNewLoop);
                         sendMidiData(events[i].status, events[i].data1, events[i].data2,
                                      offset, events[i].beat, events.size() > 0);
-                    }
-                } else {
-                    if (events.size() > 0) {
-                        printDebugFrameInfo("nothing to do ...", currentStartSample, currentEndSample, frameCount);
-                        printf("");
                     }
                 }
             }
@@ -223,11 +205,6 @@ public:
         }
         framesCounted += frameCount;
         wasPlaying = isPlaying;
-
-        if (events.size() > 0) {
-            printf("end processing...");
-            printf("");
-        }
     }
 
     void removeNoteAt(double beat) {
