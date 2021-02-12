@@ -44,6 +44,9 @@ import AVFoundation
  Please note that pre macOS 10.13 / iOS 11 you will need to provide your own completionHandler if needed.
  */
 public class AKPlayer: AKAbstractPlayer {
+
+    public var manager: AKManager
+
     /// How the player should handle audio. If buffering, it will load the audio data into
     /// an internal buffer and play from RAM. If not, it will play the file from disk.
     /// Dynamic buffering will only load the audio if it needs to for processing reasons
@@ -239,7 +242,8 @@ public class AKPlayer: AKAbstractPlayer {
 
     // MARK: - Initialization
 
-    override public init() {
+    public init(manager: AKManager) {
+        self.manager = manager
         let output = AKFader()
         super.init(avAudioNode: output.avAudioUnitOrNode, attach: false)
         faderNode = output
@@ -251,13 +255,13 @@ public class AKPlayer: AKAbstractPlayer {
     }
 
     /// Create a player from a URL
-    @objc public convenience init?(url: URL) {
+    @objc public convenience init?(url: URL, manager: AKManager) {
         if FileManager.default.fileExists(atPath: url.path) == false {
             return nil
         }
         do {
             let avfile = try AVAudioFile(forReading: url)
-            self.init(audioFile: avfile, reopenFile: false)
+            self.init(audioFile: avfile, reopenFile: false, manager: manager)
             return
         } catch {
             AKLog("ERROR loading \(url.path) \(error)")
@@ -268,8 +272,8 @@ public class AKPlayer: AKAbstractPlayer {
     /// Create a player from an AVAudioFile (or AKAudioFile). If a file has previously
     /// been opened for writing, you can reset it to readOnly with the reopenFile flag.
     /// This is necessary in cases where AKMicrophone may of had access to the file.
-    @objc public convenience init(audioFile: AVAudioFile, reopenFile: Bool = true) {
-        self.init()
+    @objc public convenience init(audioFile: AVAudioFile, reopenFile: Bool = true, manager: AKManager) {
+        self.init(manager: manager)
 
         self.audioFile = audioFile
 
@@ -294,14 +298,14 @@ public class AKPlayer: AKAbstractPlayer {
         }
 
         if playerNode.engine == nil {
-            AKManager.engine.attach(playerNode)
+            manager.engine.attach(playerNode)
         } else {
             playerNode.disconnectOutput()
         }
 
         if let strongMixer = mixerNode {
             if strongMixer.engine == nil {
-                AKManager.engine.attach(strongMixer)
+                manager.engine.attach(strongMixer)
             } else {
                 // intermediate nodes get disconnected and re-connected
                 strongMixer.disconnectOutput()
@@ -310,7 +314,7 @@ public class AKPlayer: AKAbstractPlayer {
 
         if let faderNode = super.faderNode {
             if faderNode.avAudioUnitOrNode.engine == nil {
-                AKManager.engine.attach(faderNode.avAudioUnitOrNode)
+                manager.engine.attach(faderNode.avAudioUnitOrNode)
             }
             // but, don't disconnect the main output!
             // faderNode stays plugged in
@@ -340,13 +344,13 @@ public class AKPlayer: AKAbstractPlayer {
         // this is used only for dynamic sample rate conversion to
         // AKSettings.audioFormat if needed
         if let mixerNode = mixerNode {
-            AKManager.connect(playerNode, to: mixerNode, format: processingFormat)
+            manager.connect(playerNode, to: mixerNode, format: processingFormat)
             connectionFormat = AKSettings.audioFormat
             playerOutput = mixerNode
         }
 
         if let faderNode = faderNode {
-            AKManager.connect(playerOutput, to: faderNode.avAudioUnitOrNode, format: connectionFormat)
+            manager.connect(playerOutput, to: faderNode.avAudioUnitOrNode, format: connectionFormat)
         }
 
         faderNode?.bypass()
@@ -460,10 +464,10 @@ public class AKPlayer: AKAbstractPlayer {
         super.detach() // get rid of the faderNode
         audioFile = nil
         buffer = nil
-        AKManager.detach(nodes: [playerNode])
+        manager.detach(nodes: [playerNode])
 
         if let mixerNode = self.mixerNode {
-            AKManager.detach(nodes: [mixerNode])
+            manager.detach(nodes: [mixerNode])
             self.mixerNode = nil
         }
     }

@@ -12,7 +12,7 @@ import Foundation
 extension AKManager {
 
     // Attaches nodes if node.engine == nil
-    private static func safeAttach(_ nodes: [AVAudioNode]) {
+    private func safeAttach(_ nodes: [AVAudioNode]) {
         _ = nodes.filter { $0.engine == nil }.map { engine.attach($0) }
     }
 
@@ -24,7 +24,7 @@ extension AKManager {
     // function that makes the mixer create new inputs, then remove the dummy nodes so that there is an available
     // bus to connect to.
     //
-    private static func checkMixerInputs(_ connectionPoints: [AVAudioConnectionPoint]) {
+    private func checkMixerInputs(_ connectionPoints: [AVAudioConnectionPoint]) {
 
         if !engine.isRunning { return }
 
@@ -50,7 +50,7 @@ extension AKManager {
     // on the mixer, subsequent connections made to the mixer will silently fail.  A workaround is to connect a dummy
     // node to the mixer prior to making a connection, then removing the dummy node after the connection has been made.
     //
-    private static func addDummyOnEmptyMixer(_ node: AVAudioNode) -> AVAudioNode? {
+    private func addDummyOnEmptyMixer(_ node: AVAudioNode) -> AVAudioNode? {
 
         // Only an issue if engine is running, node is a mixer, and mixer has no inputs
         guard let mixer = node as? AVAudioMixerNode,
@@ -65,7 +65,7 @@ extension AKManager {
         return dummy
     }
 
-    @objc public static func connect(_ sourceNode: AVAudioNode,
+    @objc public func connect(_ sourceNode: AVAudioNode,
                                    to destNodes: [AVAudioConnectionPoint],
                                    fromBus sourceBus: AVAudioNodeBus,
                                    format: AVAudioFormat?) {
@@ -79,7 +79,7 @@ extension AKManager {
         dummyNode?.disconnectOutput()
     }
 
-    @objc public static func connect(_ node1: AVAudioNode,
+    @objc public func connect(_ node1: AVAudioNode,
                                    to node2: AVAudioNode,
                                    fromBus bus1: AVAudioNodeBus,
                                    toBus bus2: AVAudioNodeBus,
@@ -92,12 +92,12 @@ extension AKManager {
         dummyNode?.disconnectOutput()
     }
 
-    @objc public static func connect(_ node1: AVAudioNode, to node2: AVAudioNode, format: AVAudioFormat?) {
+    @objc public func connect(_ node1: AVAudioNode, to node2: AVAudioNode, format: AVAudioFormat?) {
         connect(node1, to: node2, fromBus: 0, toBus: 0, format: format)
     }
 
     //Convenience
-    @objc public static func detach(nodes: [AVAudioNode]) {
+    @objc public func detach(nodes: [AVAudioNode]) {
         for node in nodes {
             guard node.engine != nil else { continue }
             engine.detach(node)
@@ -116,7 +116,7 @@ extension AKManager {
     ///         - progress: A closure called while rendering, use this to fetch render progress
     ///
     @available(iOS 11, macOS 10.13, tvOS 11, *)
-    @objc public static func renderToFile(_ audioFile: AVAudioFile,
+    @objc public func renderToFile(_ audioFile: AVAudioFile,
                                           maximumFrameCount: AVAudioFrameCount = 4_096,
                                           duration: Double,
                                           prerender: (() -> Void)? = nil,
@@ -126,7 +126,7 @@ extension AKManager {
     }
 
     @available(iOS 11, macOS 10.13, tvOS 11, *)
-    public static func printConnections() {
+    public func printConnections() {
 
         let nodes: [AVAudioNode] = {
             var nodes = Set<AVAudioNode>()

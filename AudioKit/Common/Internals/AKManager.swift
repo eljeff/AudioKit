@@ -24,15 +24,17 @@ public typealias AKMIDICallback = (MIDIByte, MIDIByte, MIDIByte) -> Void
 
 open class AKManager: NSObject {
     #if !os(macOS)
-    public static let deviceSampleRate = AVAudioSession.sharedInstance().sampleRate
+    public let deviceSampleRate = AVAudioSession.sharedInstance().sampleRate
     #else
-    public static let deviceSampleRate: Double = 44_100
+    public let deviceSampleRate: Double = 44_100
     #endif
 
     // MARK: - Internal audio engine mechanics
 
+    @objc var shouldBeRunning = false
+
     /// Reference to the AV Audio Engine
-    @objc public static var engine: AVAudioEngine {
+    @objc public var engine: AVAudioEngine {
         get {
             // Access a few attributes immediately so things are initialized properly
             #if !os(tvOS)
@@ -40,7 +42,7 @@ open class AKManager: NSObject {
                 _ = _engine.inputNode
             }
             #endif
-            _ = AKManager.deviceSampleRate
+            _ = deviceSampleRate
             return _engine
         }
         set {
@@ -48,15 +50,15 @@ open class AKManager: NSObject {
         }
     }
 
-    internal static var _engine = AVAudioEngine()
+    internal var _engine = AVAudioEngine()
 
     /// Reference to singleton MIDI
 
     #if !os(tvOS)
-    public static let midi = AKMIDI()
+    public let midi = AKMIDI()
     #endif
 
-    @objc static var finalMixer: AKMixer? {
+    @objc var finalMixer: AKMixer? {
         didSet {
             if let mixer = finalMixer {
                 for connection in internalConnections {
@@ -70,12 +72,12 @@ open class AKManager: NSObject {
 
     /// internalConnections are used for not-strictly audio processing nodes that need
     /// a mechanism to pull samples (ie. the sequencer)
-    @objc static var internalConnections: [AKNode] = []
+    @objc var internalConnections: [AKNode] = []
 
     // MARK: - Device Management
 
     /// An audio output operation that most applications will need to use last
-    @objc public static var output: AKNode? {
+    @objc public var output: AKNode? {
         didSet {
             #if !os(macOS)
             do {
@@ -103,14 +105,14 @@ open class AKManager: NSObject {
 
     #if os(macOS)
     /// Enumerate the list of available devices.
-    @objc public static var devices: [AKDevice]? {
+    @objc public var devices: [AKDevice]? {
         EZAudioUtilities.setShouldExitOnCheckResultFail(false)
         return EZAudioDevice.devices().map { AKDevice(ezAudioDevice: $0 as! EZAudioDevice) }
     }
     #endif
 
     /// Enumerate the list of available input devices.
-    @objc public static var inputDevices: [AKDevice]? {
+    @objc public var inputDevices: [AKDevice]? {
         #if os(macOS)
         EZAudioUtilities.setShouldExitOnCheckResultFail(false)
         return EZAudioDevice.inputDevices().map { AKDevice(ezAudioDevice: $0 as! EZAudioDevice) }
@@ -134,7 +136,7 @@ open class AKManager: NSObject {
     }
 
     /// Enumerate the list of available output devices.
-    @objc public static var outputDevices: [AKDevice]? {
+    @objc public var outputDevices: [AKDevice]? {
         #if os(macOS)
         EZAudioUtilities.setShouldExitOnCheckResultFail(false)
         return EZAudioDevice.outputDevices().map { AKDevice(ezAudioDevice: $0 as! EZAudioDevice) }
@@ -152,7 +154,7 @@ open class AKManager: NSObject {
     }
 
     /// The name of the current input device, if available.
-    @objc public static var inputDevice: AKDevice? {
+    @objc public var inputDevice: AKDevice? {
         #if os(macOS)
         if let dev = EZAudioDevice.currentInput() {
             return AKDevice(name: dev.name, deviceID: dev.deviceID)
@@ -173,7 +175,7 @@ open class AKManager: NSObject {
     }
 
     /// The name of the current output device, if available.
-    @objc public static var outputDevice: AKDevice? {
+    @objc public var outputDevice: AKDevice? {
         #if os(macOS)
         if let dev = EZAudioDevice.currentOutput() {
             return AKDevice(name: dev.name, deviceID: dev.deviceID)
@@ -189,7 +191,7 @@ open class AKManager: NSObject {
     }
 
     /// Change the preferred input device, giving it one of the names from the list of available inputs.
-    @objc public static func setInputDevice(_ input: AKDevice) throws {
+    @objc public func setInputDevice(_ input: AKDevice) throws {
         #if os(macOS)
         try AKTry {
             var address = AudioObjectPropertyAddress(
@@ -217,7 +219,7 @@ open class AKManager: NSObject {
     }
 
     /// Change the preferred output device, giving it one of the names from the list of available output.
-    @objc public static func setOutputDevice(_ output: AKDevice) throws {
+    @objc public func setOutputDevice(_ output: AKDevice) throws {
         #if os(macOS)
         try AKTry {
             var id = output.deviceID
@@ -235,7 +237,7 @@ open class AKManager: NSObject {
     // MARK: - Disconnect node inputs
 
     /// Disconnect all inputs
-    @objc public static func disconnectAllInputs() {
+    @objc public func disconnectAllInputs() {
         guard let finalMixer = finalMixer else { return }
 
         engine.disconnectNodeInput(finalMixer.avAudioNode)

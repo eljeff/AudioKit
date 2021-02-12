@@ -9,6 +9,8 @@
 /// A timing protocol used for syncronizing different audio sources.
 @objc public protocol AKTiming {
 
+    var manager: AKManager { get set }
+
     /// Starts playback at a specific time.
     /// - Parameter audioTime: A time in the audio render context.
     ///
@@ -55,7 +57,7 @@ extension AKTiming {
      - Parameter position: The position of the nodes when started.
      - Returns: The audioTime (in the future) that the nodes will be started at.
      */
-    public static func syncStart(_ nodes: [AKTiming], at position: Double = 0) -> AVAudioTime {
+    public func syncStart(_ nodes: [AKTiming], at position: Double = 0) -> AVAudioTime {
         for node in nodes {
             node.stop()
             node.setPosition(position)
@@ -63,7 +65,7 @@ extension AKTiming {
         }
 
         let bufferDuration = AKSettings.ioBufferDuration
-        let referenceTime = AKManager.engine.outputNode.lastRenderTime ?? AVAudioTime.now()
+        let referenceTime = manager.engine.outputNode.lastRenderTime ?? AVAudioTime.now()
         let startTime = referenceTime + bufferDuration
         for node in nodes {
             node.start(at: startTime)
@@ -87,7 +89,7 @@ extension AKTiming {
         var startTime = audioTime
         if startTime == nil {
             let bufferDuration = AKSettings.ioBufferDuration
-            let referenceTime = AKManager.engine.outputNode.lastRenderTime ?? AVAudioTime.now()
+            let referenceTime = manager.engine.outputNode.lastRenderTime ?? AVAudioTime.now()
             startTime = referenceTime + bufferDuration
         }
 
@@ -99,6 +101,8 @@ extension AKTiming {
 
 /// An AKTiming implementation that uses a node for it's render time info.
 open class AKNodeTiming: NSObject {
+
+    public var manager: AKManager
 
     /// An output node used for tming info.
     open weak var node: AKOutput?
@@ -132,8 +136,9 @@ open class AKNodeTiming: NSObject {
 
     /// Initialize with a node to be used for timing info.
     /// - Parameter node: A node to be used for timing information.
-    public init(node: AKOutput) {
+    public init(node: AKOutput, manager: AKManager) {
         self.node = node
+        self.manager = manager
     }
 
 }

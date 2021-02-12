@@ -14,6 +14,9 @@ extension AVAudioConnectionPoint {
 
 /// Parent class for all nodes in AudioKit
 @objc open class AKNode: NSObject {
+
+    var manager: AKManager
+
     /// The internal AVAudioEngine AVAudioNode
     @objc open var avAudioNode: AVAudioNode
 
@@ -26,30 +29,33 @@ extension AVAudioConnectionPoint {
     }
 
     /// Create the node
-    public override init() {
+    public init(manager: AKManager) {
+        self.manager = manager
         self.avAudioNode = AVAudioNode()
     }
 
     /// Initialize the node from an AVAudioUnit
-    @objc public init(avAudioUnit: AVAudioUnit, attach: Bool = false) {
+    @objc public init(avAudioUnit: AVAudioUnit, attach: Bool = false, manager: AKManager) {
         self.avAudioUnit = avAudioUnit
         self.avAudioNode = avAudioUnit
+        self.manager = manager
         if attach {
-            AKManager.engine.attach(avAudioUnit)
+            manager.engine.attach(avAudioUnit)
         }
     }
 
     /// Initialize the node from an AVAudioNode
-    @objc public init(avAudioNode: AVAudioNode, attach: Bool = false) {
+    @objc public init(avAudioNode: AVAudioNode, attach: Bool = false, manager: AKManager) {
         self.avAudioNode = avAudioNode
+        self.manager = manager
         if attach {
-            AKManager.engine.attach(avAudioNode)
+            manager.engine.attach(avAudioNode)
         }
     }
 
     // Subclasses should override to detach all internal nodes
     open func detach() {
-        AKManager.detach(nodes: [self.avAudioUnitOrNode])
+        manager.detach(nodes: [self.avAudioUnitOrNode])
     }
 }
 
@@ -73,7 +79,7 @@ extension AKNode {
 
     @available(*, deprecated, message: "Use AudioKit.detach(nodes:) instead")
     open func disconnect(nodes: [AVAudioNode]) {
-        AKManager.detach(nodes: nodes)
+        manager.detach(nodes: nodes)
     }
 }
 

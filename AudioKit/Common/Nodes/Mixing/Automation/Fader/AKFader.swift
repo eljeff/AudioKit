@@ -162,8 +162,8 @@ open class AKFader: AKNode, AKToggleable, AKComponent, AKInput, AKAutomatable {
 
         _Self.register()
 
-        super.init()
-        AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
+        super.init(manager: manager)
+        AVAudioUnit._instantiate(with: _Self.ComponentDescription, manager: manager) { [weak self] avAudioUnit in
             guard let strongSelf = self else {
                 AKLog("Error: self is nil")
                 return

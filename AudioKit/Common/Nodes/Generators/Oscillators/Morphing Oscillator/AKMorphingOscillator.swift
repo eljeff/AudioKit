@@ -140,8 +140,8 @@ open class AKMorphingOscillator: AKNode, AKToggleable, AKComponent {
     // MARK: - Initialization
 
     /// Initialize the oscillator with defaults
-    public convenience override init() {
-        self.init(waveformArray: [AKTable(.triangle), AKTable(.square), AKTable(.sine), AKTable(.sawtooth)])
+    public convenience override init(manager: AKManager) {
+        self.init(waveformArray: [AKTable(.triangle), AKTable(.square), AKTable(.sine), AKTable(.sawtooth)], manager: manager)
     }
 
     /// Initialize this Morpher node
@@ -162,7 +162,8 @@ open class AKMorphingOscillator: AKNode, AKToggleable, AKComponent {
         index: Double = defaultIndex,
         detuningOffset: Double = defaultDetuningOffset,
         detuningMultiplier: Double = defaultDetuningMultiplier,
-        phase: Double = defaultPhase) {
+        phase: Double = defaultPhase,
+        manager: AKManager) {
 
         self.waveformArray = waveformArray
         self.frequency = frequency
@@ -174,8 +175,8 @@ open class AKMorphingOscillator: AKNode, AKToggleable, AKComponent {
 
         _Self.register()
 
-        super.init()
-        AVAudioUnit._instantiate(with: _Self.ComponentDescription) { [weak self] avAudioUnit in
+        super.init(manager: manager)
+        AVAudioUnit._instantiate(with: _Self.ComponentDescription, manager: manager) { [weak self] avAudioUnit in
             guard let strongSelf = self else {
                 AKLog("Error: self is nil")
                 return

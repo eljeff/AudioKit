@@ -8,15 +8,16 @@
 
 /// Wrapper for audio units that accept MIDI (ie. instruments)
 open class AKAudioUnitInstrument: AKMIDIInstrument {
+    
     /// Initialize the audio unit instrument
     ///
     /// - parameter audioUnit: AVAudioUnitMIDIInstrument to wrap
     ///
-    public init?(audioUnit: AVAudioUnitMIDIInstrument) {
+    public init?(audioUnit: AVAudioUnitMIDIInstrument, manager: AKManager) {
         super.init()
         midiInstrument = audioUnit
 
-        AKManager.engine.attach(audioUnit)
+        manager.engine.attach(audioUnit)
 
         // assign the output to the mixer
         avAudioUnit = audioUnit

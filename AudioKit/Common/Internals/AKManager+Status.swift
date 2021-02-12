@@ -15,17 +15,15 @@ extension AKManager {
 
     /// Format of AudioKit Nodes
     @available(*, deprecated, renamed: "AKSettings.audioFormat")
-    @objc public static var format: AVAudioFormat {
+    @objc public var format: AVAudioFormat {
         return AKSettings.audioFormat
     }
-
-    @objc static var shouldBeRunning = false
 
     #if os(iOS)
     var isIAAConnected: Bool {
         #if !targetEnvironment(macCatalyst)
         do {
-            let result: UInt32? = try AKManager.engine.outputNode.audioUnit?.getValue(forProperty: kAudioUnitProperty_IsInterAppConnected)
+            let result: UInt32? = try engine.outputNode.audioUnit?.getValue(forProperty: kAudioUnitProperty_IsInterAppConnected)
             return result == 1
         } catch {
             AKLog("could not get IAA status: \(error)")

@@ -27,7 +27,7 @@ public class AKMIDIFileTrackNoteMap {
     public let midiFile: AKMIDIFile!
     public let trackNum: Int!
     //AudioKit midi object reference for later implementation with the AKMIDITempoListener
-    let midi = AKManager.midi
+    let midi: AKMIDI
     public let tempoListener = AKMIDITempoListener(smoothing: 0.98, bpmHistoryLimit: 1)
     public var loNote: Int {
         if noteList.count >= 2 {
@@ -176,7 +176,7 @@ public class AKMIDIFileTrackNoteMap {
         return finalNoteList
     }
 
-    public init(midiFile: AKMIDIFile, trackNum: Int) {
+    public init(midiFile: AKMIDIFile, trackNum: Int, midi: AKMIDI) {
         self.midiFile = midiFile
         if midiFile.tracks.count != 0 {
             if trackNum > (midiFile.tracks.count - 1) {
@@ -195,10 +195,11 @@ public class AKMIDIFileTrackNoteMap {
             self.midiTrack = midiFile.tracks[0]
             self.trackNum = 0
         }
-        midi.createVirtualPorts()
-        midi.openInput(uid: 1)
-        midi.openOutput(uid: 1)
-        midi.addListener(tempoListener)
+        self.midi = midi
+        self.midi.createVirtualPorts()
+        self.midi.openInput(uid: 1)
+        self.midi.openOutput(uid: 1)
+        self.midi.addListener(tempoListener)
         tempoListener.clockListener?.addObserver(self)
         tempoListener.addObserver(self)
     }

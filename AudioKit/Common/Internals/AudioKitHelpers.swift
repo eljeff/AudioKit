@@ -304,10 +304,11 @@ internal struct AUWrapper {
 
 /// Adding instantiation with component and callback
 public extension AVAudioUnit {
-    class func _instantiate(with component: AudioComponentDescription, callback: @escaping (AVAudioUnit) -> Void) {
+    class func _instantiate(with component: AudioComponentDescription, manager: AKManager,
+                            callback: @escaping (AVAudioUnit) -> Void) {
         AVAudioUnit.instantiate(with: component, options: []) { avAudioUnit, _ in
             avAudioUnit.map {
-                AKManager.engine.attach($0)
+                manager.engine.attach($0)
                 callback($0)
             }
         }

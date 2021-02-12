@@ -26,9 +26,9 @@ open class AKMIDISampler: AKAppleSampler {
     ///
     /// - Parameter midiOutputName: Name of the instrument's MIDI output
     ///
-    public init(midiOutputName: String? = nil) {
+    public init(midiOutputName: String? = nil, clientRef: MIDIClientRef) {
         super.init()
-        enableMIDI(name: midiOutputName ?? name)
+        enableMIDI(clientRef, name: midiOutputName ?? name)
         hideVirtualMIDIPort()
     }
 
@@ -39,7 +39,7 @@ open class AKMIDISampler: AKAppleSampler {
     ///   - midiClient: A reference to the MIDI client
     ///   - name: Name to connect with
     ///
-    open func enableMIDI(_ midiClient: MIDIClientRef = AKManager.midi.client,
+    open func enableMIDI(_ midiClient: MIDIClientRef,
                          name: String = "MIDI Sampler") {
         CheckError(MIDIDestinationCreateWithBlock(midiClient, name as CFString, &midiIn) { packetList, _ in
             for e in packetList.pointee {

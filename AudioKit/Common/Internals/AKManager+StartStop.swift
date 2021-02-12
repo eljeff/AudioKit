@@ -15,7 +15,7 @@ extension AKManager {
     // MARK: - Start/Stop
 
     /// Start up the audio engine with periodic functions
-    public static func start(withPeriodicFunctions functions: AKPeriodicFunction...) throws {
+    public func start(withPeriodicFunctions functions: AKPeriodicFunction...) throws {
         // ensure that an output has been set previously
         guard let finalMixer = finalMixer else {
             AKLog("No output has been assigned yet.")
@@ -29,13 +29,13 @@ extension AKManager {
     }
 
     /// Start up the audio engine
-    @objc public static func start() throws {
+    @objc public func start() throws {
         if output == nil {
             AKLog("No output node has been set yet, no processing will happen.")
         }
         // Start the engine.
-        try AKTry {
-            engine.prepare()
+        try AKTry { [weak self] in
+            self?.engine.prepare()
         }
 
         #if os(iOS)
@@ -63,8 +63,8 @@ extension AKManager {
                                                object: nil)
         #endif
 
-        try AKTry {
-            try engine.start()
+        try AKTry { [weak self] in
+            try self?.engine.start()
             // Send AudioKit started and ready for connections notification.
             // If you listen this notification, you may not need the `shouldBeRunning` variable.
             if AKSettings.notificationsEnabled {
@@ -78,10 +78,10 @@ extension AKManager {
     }
 
     /// Stop the audio engine
-    @objc public static func stop() throws {
+    @objc public func stop() throws {
         // Stop the engine.
-        try AKTry {
-            engine.stop()
+        try AKTry {[weak self] in
+            self?.engine.stop()
         }
         shouldBeRunning = false
 
@@ -99,7 +99,7 @@ extension AKManager {
         #endif
     }
 
-    @objc public static func shutdown() throws {
+    @objc public func shutdown() throws {
         engine = AVAudioEngine()
         finalMixer = nil
         output = nil
@@ -109,7 +109,7 @@ extension AKManager {
 
 #if !os(macOS)
 extension AKManager {
-    @objc internal static func updateSessionCategoryAndOptions() throws {
+    @objc internal func updateSessionCategoryAndOptions() throws {
         guard AKSettings.disableAVAudioSessionCategoryManagement == false else { return }
 
         let sessionCategory = AKSettings.computedSessionCategory()
@@ -126,17 +126,18 @@ extension AKManager {
 
     // Listen to changes in audio configuration
     // and restart the audio engine if it stops and should be playing
-    @objc fileprivate static func restartEngineAfterConfigurationChange(_ notification: Notification) {
+    @objc fileprivate func restartEngineAfterConfigurationChange(_ notification: Notification) {
         // Notifications aren't guaranteed to be on the main thread
-        let attemptRestart = {
+        let attemptRestart = { [weak self] in
+            guard let strongSelf = self else { return }
             do {
                 // By checking the notification sender in this block rather than during observer configuration
                 // we avoid needing to create a new observer if the engine somehow changes
-                guard let notifyingEngine = notification.object as? AVAudioEngine, notifyingEngine == engine else {
+                guard let notifyingEngine = notification.object as? AVAudioEngine, notifyingEngine == strongSelf.engine else {
                     return
                 }
 
-                if AKSettings.enableCategoryChangeHandling, !engine.isRunning, shouldBeRunning {
+                if AKSettings.enableCategoryChangeHandling, !strongSelf.engine.isRunning, strongSelf.shouldBeRunning {
                     #if !os(macOS)
                     let appIsNotActive = UIApplication.shared.applicationState != .active
                     let appDoesNotSupportBackgroundAudio = !AKSettings.appSupportsBackgroundAudio
@@ -147,7 +148,7 @@ extension AKManager {
                     }
                     #endif
 
-                    try engine.start()
+                    try strongSelf.engine.start()
 
                     // Sends notification after restarting the engine, so it is safe to resume AudioKit functions.
                     if AKSettings.notificationsEnabled {
@@ -170,11 +171,12 @@ extension AKManager {
     }
 
     // Restarts the engine after audio output has been changed, like headphones plugged in.
-    @objc fileprivate static func restartEngineAfterRouteChange(_ notification: Notification) {
+    @objc fileprivate func restartEngineAfterRouteChange(_ notification: Notification) {
         // Notifications aren't guaranteed to come in on the main thread
 
-        let attemptRestart = {
-            if AKSettings.enableRouteChangeHandling, shouldBeRunning, !engine.isRunning {
+        let attemptRestart = { [weak self] in
+            guard let strongSelf = self else { return }
+            if AKSettings.enableRouteChangeHandling, strongSelf.shouldBeRunning, !strongSelf.engine.isRunning {
                 do {
                     #if !os(macOS)
                     let appIsNotActive = UIApplication.shared.applicationState != .active
@@ -186,7 +188,7 @@ extension AKManager {
                     }
                     #endif
 
-                    try engine.start()
+                    try self?.engine.start()
 
                     // Sends notification after restarting the engine, so it is safe to resume AudioKit functions.
                     if AKSettings.notificationsEnabled {
