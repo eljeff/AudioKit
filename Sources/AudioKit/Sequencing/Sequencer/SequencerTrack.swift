@@ -2,6 +2,7 @@
 
 #if !os(tvOS)
 
+//import Atomics
 import CAudioKit
 import Foundation
 
@@ -119,8 +120,9 @@ open class SequencerTrack {
     }
 
     private var renderObserverToken: Int?
+    public var renderObserver: AURenderObserver?
 
-    private func updateSequence() {
+    func updateSequence() {
         guard let block = targetNode?.avAudioUnit?.auAudioUnit.scheduleMIDIEventBlock else {
             Log("Failed to get AUScheduleMIDIEventBlock")
             return
@@ -142,7 +144,7 @@ open class SequencerTrack {
                                                                      settings,
                                                                      Settings.sampleRate,
                                                                      block) else { return }
-
+                renderObserver = observer
                 guard let auAudioUnit = targetNode?.avAudioUnit?.auAudioUnit else { return }
 
                 if let token = renderObserverToken {
