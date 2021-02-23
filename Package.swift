@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -20,8 +20,14 @@ let package = Package(
         //.package(url: "https://github.com/apple/swift-atomics", from: "0.0.2")
     ],
     targets: [
-        .target(name: "STK", publicHeadersPath: "include"),
+        .target(name: "STK",
+                exclude: ["rawwaves", "LICENSE"],
+                publicHeadersPath: "include"),
         .target(name: "soundpipe",
+                exclude: ["README.md",
+                          "lib/kissfft/COPYING",
+                          "lib/kissfft/README",
+                          "lib/inih/LICENSE.txt"],
                 publicHeadersPath: "include",
                 cSettings: [
                     .headerSearchPath("lib/kissfft"),
@@ -33,6 +39,7 @@ let package = Package(
         .target(
             name: "sporth",
             dependencies: ["soundpipe"],
+            exclude: ["README.md"],
             publicHeadersPath: "include"),
         .target(
             name: "CAudioKit",
@@ -51,7 +58,8 @@ let package = Package(
             dependencies: ["CAudioKit"]),
         .testTarget(
             name: "AudioKitTests",
-            dependencies: ["AudioKit"]),
+            dependencies: ["AudioKit"],
+            resources: [.copy("Resources")]),
         .testTarget(
             name: "CAudioKitTests",
             dependencies: ["CAudioKit"])

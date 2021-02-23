@@ -69,14 +69,5 @@ AK_API void akCallbackInstrumentSetCallback(DSPRef dsp, CMIDICallback callback);
 #define PhaseDistortionOscillatorDebugPhase 0
 #define OscillatorDebugPhase 0
 
-// EZAudio
-#import "EZAudio.h"
-#import "EZAudioPlot.h"
-#import "EZAudioFFT.h"
-
-// TPCircularBuffer
-#import "TPCircularBuffer+Unit.h"
-#import "TPCircularBuffer+AudioBufferList.h"
-
 // Misc
 #import "BufferedAudioBus.h"
