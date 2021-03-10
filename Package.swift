@@ -60,8 +60,7 @@ let package = Package(
             exclude: ["Nodes/Playback/Samplers/PreparingSampleSets.md"]),
         .testTarget(
             name: "AudioKitTests",
-            dependencies: ["AudioKit"],
-            resources: [.copy("Resources")]),
+            dependencies: ["AudioKit"]),
         .testTarget(
             name: "CAudioKitTests",
             dependencies: ["CAudioKit"])
