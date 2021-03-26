@@ -99,7 +99,7 @@ extension Sampler {
                                                               loopEndPoint: loopEndPoint,
                                                               startPoint: 0.0,
                                                               endPoint: 0.0)
-                    let sampleFileURL = samplesBaseURL.appendingPathComponent(sample)
+                    let sampleFileURL = samplesBaseURL.appendingPathComponent(sample.replacingOccurrences(of: "\\", with: "/"))
                     if sample.hasSuffix(".wv") {
                         sampleFileURL.path.withCString { path in
                             loadCompressedSampleFile(from: SampleFileDescriptor(sampleDescriptor: sampleDescriptor,
