@@ -23,7 +23,7 @@ extension Sampler {
     /// Parameters:
     ///   - url: File url to the SFZ file
     ///
-    open func loadSFZ(url: URL) {
+    public func loadSFZ(url: URL) {
 
         stopAllVoices()
         unloadAllSamples()
