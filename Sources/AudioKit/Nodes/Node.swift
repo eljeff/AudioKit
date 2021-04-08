@@ -175,7 +175,8 @@ open class PolyphonicNode: Node, Polyphonic {
         if let midiBlock = avAudioUnit?.auAudioUnit.scheduleMIDIEventBlock {
             event.data.withUnsafeBufferPointer { ptr in
                 guard let ptr = ptr.baseAddress else { return }
-                midiBlock(AUEventSampleTimeImmediate + AUEventSampleTime(offset), 0, event.data.count, ptr)
+                let offsetPlusTime = AUEventSampleTimeImmediate + AUEventSampleTime(offset)
+                midiBlock(offsetPlusTime, 0, event.data.count, ptr)
             }
         }
     }
