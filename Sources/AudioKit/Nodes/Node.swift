@@ -180,6 +180,23 @@ open class PolyphonicNode: Node, Polyphonic {
             }
         }
     }
+
+    func scheduleMIDIEvent(event: MIDIEvent, timeStamp: UInt64) {
+        if let midiBlock = avAudioUnit?.auAudioUnit.scheduleMIDIEventBlock {
+            event.data.withUnsafeBufferPointer { ptr in
+                guard let ptr = ptr.baseAddress else { return }
+                var timeToFireEvent: Int64
+                let currentTime = mach_absolute_time()
+                if currentTime < Int64(timeStamp) {
+                    timeToFireEvent = AUEventSampleTimeImmediate + Int64(timeStamp - currentTime)
+                } else {
+                    timeToFireEvent = AUEventSampleTimeImmediate
+                }
+                //print("timeToFireEvent \(timeToFireEvent) - immediate \(AUEventSampleTimeImmediate) - timeStamp \(timeStamp) - current \(currentTime) - mathed \(Int64(timeStamp) - AUEventSampleTimeImmediate)")
+                midiBlock(timeToFireEvent, 0, event.data.count, ptr)
+            }
+        }
+    }
 }
 
 /// Protocol for dictating that a node can be in a started or stopped state
