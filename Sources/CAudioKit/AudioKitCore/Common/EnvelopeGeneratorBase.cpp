@@ -94,7 +94,7 @@ namespace AudioKitCore
         int length = seg.lengthSamples;
         while (length == 0) { //skip any segments that are 0-length
             curSegIndex++;
-            seg = (*segments)[curSegIndex];
+            seg = (*segments)[curSegIndex]; //FIXME: this crashed on 20210408 w a huge number for curSegIndex
             length = seg.lengthSamples;
         }
         if (curSegIndex >= int(segments->size())) // if at end of the envelope, reset
