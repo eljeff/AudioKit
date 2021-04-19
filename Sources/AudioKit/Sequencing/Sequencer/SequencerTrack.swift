@@ -120,6 +120,7 @@ open class SequencerTrack {
     }
 
     private var renderObserverToken: Int?
+    public var renderObserver: AURenderObserver?
 
     private func updateSequence() {
         guard let block = targetNode?.avAudioUnit?.auAudioUnit.scheduleMIDIEventBlock else {
@@ -143,7 +144,7 @@ open class SequencerTrack {
                                                                  block) else { return }
 
             guard let auAudioUnit = targetNode?.avAudioUnit?.auAudioUnit else { return }
-
+            renderObserver = observer
             if let token = renderObserverToken {
                 auAudioUnit.removeRenderObserver(token)
             }
