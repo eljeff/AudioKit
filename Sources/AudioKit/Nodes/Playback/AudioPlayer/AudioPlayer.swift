@@ -209,12 +209,12 @@ public class AudioPlayer: Node {
         guard !isPlaying || isPaused else { return }
 
         guard let engine = playerNode.engine else {
-            Log("🛑 Error: AudioPlayer must be attached before playback.")
+            Log("🛑 Error: AudioPlayer must be attached before playback.", type: .error)
             return
         }
 
         guard engine.isRunning else {
-            Log("🛑 Error: AudioPlayer's engine must be running before playback.")
+            Log("🛑 Error: AudioPlayer's engine must be running before playback.", type: .error)
             return
         }
 
@@ -281,7 +281,7 @@ extension AudioPlayer {
     ) {
         if isBuffered, let buffer = buffer {
             playerNode.scheduleBuffer(buffer,
-                                      at: nil,
+                                      at: when,
                                       options: bufferOptions,
                                       completionCallbackType: completionCallbackType) { _ in
                 self.internalCompletionHandler()

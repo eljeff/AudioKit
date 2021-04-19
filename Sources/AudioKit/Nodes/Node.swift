@@ -80,12 +80,21 @@ open class Node {
 
                 // Mixers will decide which input bus to use.
                 if let mixer = avAudioNode as? AVAudioMixerNode {
-                    mixer.connect(input: connection.avAudioNode, bus: mixer.nextAvailableInputBus)
+                    mixer.connectMixer(input: connection.avAudioNode)
                 } else {
                     avAudioNode.connect(input: connection.avAudioNode, bus: bus)
                 }
 
                 connection.makeAVConnections()
+            }
+        }
+    }
+    
+    func disconnectAV() {
+        if let engine = avAudioNode.engine {
+            engine.disconnectNodeInput(avAudioNode)
+            for (_, connection) in connections.enumerated() {
+                connection.disconnectAV()
             }
         }
     }

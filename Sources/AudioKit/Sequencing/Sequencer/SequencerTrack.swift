@@ -2,7 +2,6 @@
 
 #if !os(tvOS)
 
-//import Atomics
 import CAudioKit
 import Foundation
 
@@ -90,6 +89,7 @@ open class SequencerTrack {
     /// Stop playback
     public func stop() {
         akSequencerEngineSetPlaying(engine, false)
+        akSequencerEngineStopPlayingNotes(engine)
     }
 
     /// Set the current position to the start ofthe track
@@ -120,9 +120,8 @@ open class SequencerTrack {
     }
 
     private var renderObserverToken: Int?
-    public var renderObserver: AURenderObserver?
 
-    func updateSequence() {
+    private func updateSequence() {
         guard let block = targetNode?.avAudioUnit?.auAudioUnit.scheduleMIDIEventBlock else {
             Log("Failed to get AUScheduleMIDIEventBlock")
             return
@@ -134,25 +133,22 @@ open class SequencerTrack {
                                           loopEnabled: loopEnabled,
                                           numberOfLoops: 0)
 
-        sequence.events.withUnsafeBufferPointer { (eventsPtr: UnsafeBufferPointer<SequenceEvent>) -> Void in
-            sequence.notes.withUnsafeBufferPointer { (notesPtr: UnsafeBufferPointer<SequenceNote>) -> Void in
-                guard let observer = SequencerEngineUpdateSequence(engine,
-                                                                     eventsPtr.baseAddress,
-                                                                     sequence.events.count,
-                                                                     notesPtr.baseAddress,
-                                                                     sequence.notes.count,
-                                                                     settings,
-                                                                     Settings.sampleRate,
-                                                                     block) else { return }
-                renderObserver = observer
-                guard let auAudioUnit = targetNode?.avAudioUnit?.auAudioUnit else { return }
+        let orderedEvents = sequence.beatTimeOrderedEvents()
+        orderedEvents.withUnsafeBufferPointer { (eventsPtr: UnsafeBufferPointer<SequenceEvent>) -> Void in
+            guard let observer = SequencerEngineUpdateSequence(engine,
+                                                                 eventsPtr.baseAddress,
+                                                                 orderedEvents.count,
+                                                                 settings,
+                                                                 Settings.sampleRate,
+                                                                 block) else { return }
 
-                if let token = renderObserverToken {
-                    auAudioUnit.removeRenderObserver(token)
-                }
+            guard let auAudioUnit = targetNode?.avAudioUnit?.auAudioUnit else { return }
 
-                renderObserverToken = auAudioUnit.token(byAddingRenderObserver: observer)
+            if let token = renderObserverToken {
+                auAudioUnit.removeRenderObserver(token)
             }
+
+            renderObserverToken = auAudioUnit.token(byAddingRenderObserver: observer)
         }
     }
 }
