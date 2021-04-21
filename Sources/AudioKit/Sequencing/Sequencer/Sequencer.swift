@@ -77,7 +77,10 @@ open class Sequencer {
 
     /// Stop playback
     public func stop() {
-        for track in tracks { track.stop() }
+        for track in tracks {
+            track.stop()
+            track.stopPlayingNotes()
+        }
     }
 
     /// Rewind playback
