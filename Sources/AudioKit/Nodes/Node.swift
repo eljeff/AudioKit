@@ -84,7 +84,6 @@ open class Node {
                 } else {
                     avAudioNode.connect(input: connection.avAudioNode, bus: bus)
                 }
-
                 connection.makeAVConnections()
             }
         }

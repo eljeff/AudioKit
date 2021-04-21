@@ -141,7 +141,6 @@ public class AudioEngine {
     }
     
     public func rebuild() {
-        
         // Disconnect everything.
         let out = output
         out?.disconnectAV()
