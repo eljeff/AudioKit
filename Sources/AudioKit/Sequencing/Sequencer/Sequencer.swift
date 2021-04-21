@@ -60,6 +60,10 @@ open class Sequencer {
         load(midiFileURL: fileURL)
     }
 
+    deinit {
+        stop()
+    }
+
     /// Start playback of the track from the current position (like unpause)
     public func play() {
         for track in tracks { track.play() }
